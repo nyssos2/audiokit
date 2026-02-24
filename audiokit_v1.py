@@ -38,23 +38,21 @@ if not check_password():
 # --- 2. CONFIGURATION API ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-# On simplifie : on définit le modèle directement. 
-# Si gemini-1.5-flash ne passe pas, on essaie la version courte.
+# On définit le vrai nom technique pour Google
+ID_MODEL_TECHNIQUE = "gemini-1.5-flash"
+
 try:
-    model = GenerativeModel("gemini-1.5-flash")
+    model = GenerativeModel(model_name=ID_MODEL_TECHNIQUE)
 except:
-    model = GenerativeModel("gemini-pro") # Solution de secours
+    model = GenerativeModel(model_name="gemini-pro")
 
-target_model = "Gemini Flash"
-
-# Configuration simplifiée (sans tools pour le premier succès !)
-model = GenerativeModel(model_name=target_model)
-
+# On garde un joli nom pour l'affichage Streamlit
+nom_affichage = "Gemini 1.5 Flash (Rapide)"
 
 # --- TITRE ET SOUS-TITRE ---
 st.title("🎙️ Mon Guide Voyage Perso")
-st.markdown("##### Crée tes audio-guides immersifs et captivants !") # Le ##### rend le texte plus élégant
-st.markdown(f"**Modèle utilisé :** `{target_model}`")
+st.markdown("##### Crée tes audio-guides immersifs et captivants !")
+st.markdown(f"**Modèle utilisé :** `{nom_affichage}`")
 
 # --- INTERFACE ---
 with st.sidebar:
@@ -156,5 +154,6 @@ for f in fichiers:
         with open(f, "rb") as file:
 
             st.download_button("📥", data=file, file_name=f, key=f)
+
 
 
