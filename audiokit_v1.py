@@ -115,26 +115,30 @@ if st.session_state.script_final:
     # On met à jour le session_state avec les modifs de l'utilisateur
     st.session_state.script_final = script_edite
 
-    # ÉTAPE 3 : AUDIO
-    if st.button("🔊 2. Créer l'Audio final"):
-        try:
-            with st.status("Synthèse vocale en cours..."):
-                horodatage = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-                nom_mp3 = f"guide_{sujet.replace(' ', '_')}_{horodatage}.mp3"
     
-    # Ajoute une petite pause de silence au début du script pour laisser le temps à l'utilisateur de mettre ses écouteurs
-                texte_avec_pause = " . . . " + st.session_state.script_final
-				tts = gTTS(text=texte_avec_pause, lang='fr')
-                tts.save(nom_mp3)
-                
-            st.success("🎉 Audio prêt !")
-            st.audio(nom_mp3)
-            
-            with open(nom_mp3, "rb") as file:
-                st.download_button("📥 Télécharger le MP3", data=file, file_name=nom_mp3)
-        except Exception as e:
-            st.error(f"Oups ! Une erreur est survenue : {e}")
+   # ÉTAPE 3 : AUDIO
+if st.button("🔊 2. Créer l'Audio final"):
+    try:
+        with st.status("Synthèse vocale en cours..."):
+            horodatage = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+            nom_mp3 = f"guide_{sujet.replace(' ', '_')}_{horodatage}.mp3"
 
+            texte_avec_pause = " . . . " + st.session_state.script_final
+            tts = gTTS(text=texte_avec_pause, lang='fr')
+            tts.save(nom_mp3)
+
+        st.success("🎉 Audio prêt !")
+        st.audio(nom_mp3)
+
+        with open(nom_mp3, "rb") as file:
+            st.download_button(
+                "📥 Télécharger le MP3",
+                data=file,
+                file_name=nom_mp3
+            )
+
+    except Exception as e:
+        st.error(f"Oups ! Une erreur est survenue : {e}")
 # --- HISTORIQUE SIMPLE ---
 st.divider()
 st.subheader("📚 Bibliothèque de tes Audio-Guides")
@@ -150,6 +154,7 @@ for f in fichiers:
         with open(f, "rb") as file:
 
             st.download_button("📥", data=file, file_name=f, key=f)
+
 
 
 
