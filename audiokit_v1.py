@@ -38,16 +38,16 @@ if not check_password():
 # --- 2. CONFIGURATION API ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-# On définit le vrai nom technique pour Google
-ID_MODEL_TECHNIQUE = "gemini-1.5-flash"
+# Utilisation du nom de modèle le plus récent et stable
+ID_MODEL_TECHNIQUE = "gemini-1.5-flash-latest"
 
 try:
     model = GenerativeModel(model_name=ID_MODEL_TECHNIQUE)
 except:
-    model = GenerativeModel(model_name="gemini-pro")
+    # Solution de repli si le flash-latest ne passe pas
+    model = GenerativeModel(model_name="gemini-1.5-pro")
 
-# On garde un joli nom pour l'affichage Streamlit
-nom_affichage = "Gemini 1.5 Flash (Rapide)"
+nom_affichage = "Gemini 1.5 Flash"
 
 # --- TITRE ET SOUS-TITRE ---
 st.title("🎙️ Mon Guide Voyage Perso")
@@ -154,6 +154,7 @@ for f in fichiers:
         with open(f, "rb") as file:
 
             st.download_button("📥", data=file, file_name=f, key=f)
+
 
 
 
