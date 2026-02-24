@@ -128,7 +128,6 @@ if st.session_state.script_final:
     # Ajoute une petite pause de silence au début du script pour laisser le temps à l'utilisateur de mettre ses écouteurs
                 texte_avec_pause = " . . . " + st.session_state.script_final
                 tts = gTTS(text=texte_avec_pause, lang='fr')
-                tts = gTTS(text=st.session_state.script_final, lang='fr')
                 tts.save(nom_mp3)
                 
             st.success("🎉 Audio prêt !")
@@ -154,4 +153,5 @@ for f in fichiers:
         with open(f, "rb") as file:
 
             st.download_button("📥", data=file, file_name=f, key=f)
+
 
