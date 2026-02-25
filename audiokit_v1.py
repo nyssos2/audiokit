@@ -133,21 +133,44 @@ if st.session_state.script_final:
         except Exception as e:
             st.error(f"Oups ! Une erreur est survenue : {e}")
 
-# --- HISTORIQUE SIMPLE ---
+# --- HISTORIQUE AVANCÉ ---
 st.divider()
 st.subheader("📚 Bibliothèque de tes Audio-Guides")
+
+# Liste des fichiers MP3
 fichiers = [f for f in os.listdir(".") if f.endswith(".mp3")]
-fichiers.sort(reverse=True) # Les plus récents en premier
+fichiers.sort(reverse=True)
+
+if not fichiers:
+    st.write("Aucun guide dans la bibliothèque.")
 
 for f in fichiers:
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.write(f"📖 {f}")
-        st.audio(f)
-    with col2:
-        with open(f, "rb") as file:
-
-            st.download_button("📥", data=file, file_name=f, key=f)
+    # On crée un cadre pour chaque ligne d'audio
+    with st.container(border=True):
+        col1, col2, col3 = st.columns([3, 1, 1])
+        
+        with col1:
+            st.write(f"📖 **{f}**")
+            st.audio(f)
+            
+        with col2:
+            # Bouton de téléchargement
+            with open(f, "rb") as file:
+                st.download_button(
+                    label="📥", 
+                    data=file, 
+                    file_name=f, 
+                    key=f"dl_{f}",
+                    help="Télécharger ce guide"
+                )
+                
+        with col3:
+            # Bouton Supprimer avec confirmation via Popover
+            confirm = st.popover("🗑️", help="Supprimer ce fichier")
+            confirm.warning("Supprimer définitivement ?")
+            if confirm.button("Confirmer la suppression", key=f"del_{f}"):
+                os.remove(f)
+                st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
 
 
 
