@@ -47,12 +47,13 @@ model = GenerativeModel(model_name=ID_MODEL)
 # --- TITRE ET SOUS-TITRE ---
 st.title("🎙️ Ma fabrique à audio-guides perso")
 st.markdown("##### Crée tes audio-guides immersifs et captivants !")
-st.info(f"Modèle propulsé par : Gemini 2.5 Flash")
+# On utilise du HTML simple dans le markdown pour réduire la taille et griser le texte
+st.markdown(f"<p style='font-size: 0.8em; color: gray;'>Modèle propulsé par : Gemini 2.5 Flash</p>", unsafe_allow_html=True)
 
 # --- INTERFACE ---
 with st.sidebar:
     st.header("Paramètres")
-    public = st.selectbox("Public cible", ["Enfants (5-10 ans)", "Ados", "Adultes/Experts"])
+    public = st.selectbox("Public cible", ["Enfants (5-10 ans)", "Ados", "Adultes"])
     duree = st.select_slider(
         "Durée souhaitée (minutes)", 
         options=[5, 10, 15, 20, 30], 
@@ -63,7 +64,7 @@ with st.sidebar:
         options=["Lente", "Normale", "Rapide"]
     )
 
-sujet = st.text_input("Quel monument ou lieu voulez-vous visiter ?", "Le Temple d'Or à Kyoto")
+sujet = st.text_input("Quel monument ou lieu voulez-vous visiter ?")
 
 # --- 4. GÉNÉRATION ---
 # On utilise le session_state pour se souvenir du script entre les clics
@@ -71,7 +72,7 @@ if "script_final" not in st.session_state:
     st.session_state.script_final = ""
 
 # ÉTAPE 1 : RÉDACTION
-if st.button("✍️ 1. Rédiger le script"):
+if st.button("✍️ Rédiger le script"):
     try:
         with st.status("Recherche et rédaction..."):
             # Prompt optimisé pour la voix
@@ -114,7 +115,7 @@ if st.session_state.script_final:
     st.session_state.script_final = script_edite
 
     # ÉTAPE 3 : AUDIO
-    if st.button("🔊 2. Créer l'Audio final"):
+    if st.button("🔊 Créer l'Audio final"):
         try:
             with st.status("Synthèse vocale en cours..."):
                 horodatage = datetime.datetime.now().strftime("%Y%m%d_%H%M")
@@ -135,7 +136,7 @@ if st.session_state.script_final:
 
 # --- HISTORIQUE AVANCÉ ---
 st.divider()
-st.subheader("📚 Bibliothèque de tes Audio-Guides")
+st.subheader("📚 Bibliothèque de tes audio-guides")
 
 # Liste des fichiers MP3
 fichiers = [f for f in os.listdir(".") if f.endswith(".mp3")]
@@ -171,6 +172,7 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
 
 
