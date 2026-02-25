@@ -35,17 +35,23 @@ if not check_password():
     st.stop()
 
 # --- LA SUITE DE TON CODE (Configuration, Interface, etc.) ---
-# 1. Configuration
+# --- 2. CONFIGURATION API ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-# Détection automatique du modèle
+# Diagnostic : On récupère la liste réelle des modèles autorisés pour ta clé
 try:
-    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-    target_model = next((m for m in available_models if 'flash' in m), available_models[0])
-except:
-    target_model = "gemini-1.5-flash"
+    models = genai.list_models()
+    model_list = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
+    st.sidebar.write("### Modèles détectés :")
+    for m in model_list:
+        st.sidebar.code(m) # Affiche le nom exact à copier
+    
+    # On essaie d'en prendre un dans la liste automatiquement
+    target_model = model_list[0] if model_list else "gemini-pro"
+except Exception as e:
+    st.sidebar.error(f"Erreur de liste : {e}")
+    target_model = "gemini-pro"
 
-# Configuration simplifiée (sans tools pour le premier succès !)
 model = GenerativeModel(model_name=target_model)
 
 
@@ -153,5 +159,6 @@ for f in fichiers:
         with open(f, "rb") as file:
 
             st.download_button("📥", data=file, file_name=f, key=f)
+
 
 
