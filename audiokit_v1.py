@@ -10,7 +10,7 @@ def check_password():
     """Retourne True si l'utilisateur a saisi le bon mot de passe."""
     def password_entered():
         # --- MODIFIE LE MOT DE PASSE ICI ---
-        if st.session_state["password"] == st.secrets["antifasciste"]: 
+        if st.session_state["password"] == st.secrets["APP_PASSWORD"]: 
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # On ne garde pas le mot de passe en mémoire
         else:
@@ -193,3 +193,4 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
