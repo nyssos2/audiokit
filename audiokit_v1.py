@@ -7,7 +7,31 @@ import edge_tts
 import os
 import datetime
 from pydub import AudioSegment
+st.set_page_config(
+    page_title="AudioKit",
+    page_icon="🎙️",  # Tu peux mettre un emoji ou le chemin vers un fichier .png
+    layout="centered"
+)
+# --- CONFIGURATION DE L'ICÔNE MOBILE (Android/PWA) ---
+# Remplace cette URL par ton URL "Raw" GitHub de l'étape 2
+URL_MON_LOGO = "https://raw.githubusercontent.com/nyssos2/audiokit_secure/main/logo.png"
 
+# Injection de code HTML dans le <head> de la page
+st.markdown(
+    f"""
+    <style>
+    /* Ce bloc est juste pour cacher le markdown vide dans l'interface */
+    .stMarkdown {{
+        display: none;
+    }}
+    </style>
+    <link rel="icon" type="image/png" sizes="192x192" href="{URL_MON_LOGO}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{URL_MON_LOGO}">
+    <link rel="apple-touch-icon" href="{URL_MON_LOGO}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4B0082"> """,
+    unsafe_allow_html=True
+)
 # --- SÉCURITÉ : MOT DE PASSE ---
 def check_password():
     """Retourne True si l'utilisateur a saisi le bon mot de passe."""
@@ -201,19 +225,34 @@ if st.session_state.script_final:
                 # 3. MIXAGE AVEC L'AMBIANCE
                 if musique_fond and st.session_state.get('chemin_son_complet'):
                     try:
-                        son_voix = AudioSegment.from_file(nom_mp3)
+                        import time
+                        time.sleep(0.5)  # Petit dodo pour laisser Windows libérer le fichier
+                        
+                        # On charge les deux sources
+                        son_voix = AudioSegment.from_file(nom_mp3, format="mp3")
                         son_ambiance = AudioSegment.from_file(st.session_state.chemin_son_complet)
 
-                        # Réglage du volume
+                        # Réglage du volume (-25dB)
                         son_ambiance_calme = son_ambiance - 25 
+                        
+                        # Mixage
                         audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)
                         
-                        # Sécurité : on exporte dans un fichier temporaire puis on renomme
-                        temp_name = "temp_mix.mp3"
-                        audio_mixe.export(temp_name, format="mp3")
-                        os.replace(temp_name, nom_mp3)
+                        # On exporte d'abord vers un nom différent pour éviter les conflits
+                        temp_final = "final_output_temp.mp3"
+                        audio_mixe.export(temp_final, format="mp3")
+                        
+                        # On remplace le fichier original par le mixé
+                        # On ferme les accès avant (certains systèmes le demandent)
+                        del son_voix
+                        del son_ambiance
+                        
+                        os.replace(temp_final, nom_mp3)
+                        
                     except Exception as e_mix:
-                        st.warning(f"Le mixage a échoué (voix conservée). Erreur : {e_mix}")
+                        st.warning(f"Le mixage a échoué (voix seule conservée).")
+                        # C'est ici qu'on force l'affichage de l'erreur dans PowerShell :
+                        print(f"--- ERREUR MIXAGE : {e_mix}")
 
                 # 4. AJOUT DES MÉTADONNÉES GPS (Version robuste)
                 try:
@@ -285,5 +324,6 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
 
