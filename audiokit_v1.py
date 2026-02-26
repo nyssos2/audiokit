@@ -178,15 +178,20 @@ if st.session_state.script_final:
     if st.button("🔊 Créer l'Audio final"):
         try:
             with st.status("Génération de l'expérience audio..."):
-                # 1. Nom du fichier
+                # 1. Nom du fichier enrichi avec le public
                 sujet_propre = "".join(x for x in sujet if x.isalnum() or x in "._- ").replace(" ", "_")
-                fichiers_existants = [f for f in os.listdir(".") if f.startswith(f"guide_{sujet_propre}")]
+                # On nettoie le nom du public pour éviter les caractères spéciaux (ex: parenthèses)
+                public_propre = "".join(x for x in public if x.isalnum())
+                
+                nom_base = f"guide_{sujet_propre}_{public_propre}"
+                fichiers_existants = [f for f in os.listdir(".") if f.startswith(nom_base)]
                 index = len(fichiers_existants) + 1
-                nom_mp3 = f"guide_{sujet_propre}_final_{index}.mp3"
+                nom_mp3 = f"{nom_base}_final_{index}.mp3"
 
-                # 2. GÉNÉRATION DE LA VOIX (Henri ou Denise)
+                # 2. GÉNÉRATION DE LA VOIX
                 async def generate_voice():
                     voice = "fr-FR-DeniseNeural" if genre_voix == "Féminine" else "fr-FR-HenriNeural"
+                    # On ajoute un petit silence au début
                     texte_complet = " . . . " + st.session_state.script_final
                     communicate = edge_tts.Communicate(texte_complet, voice)
                     await communicate.save(nom_mp3)
@@ -199,32 +204,40 @@ if st.session_state.script_final:
                         son_voix = AudioSegment.from_file(nom_mp3)
                         son_ambiance = AudioSegment.from_file(st.session_state.chemin_son_complet)
 
-                        # Réglage de la discrétion
+                        # Réglage du volume
                         son_ambiance_calme = son_ambiance - 25 
                         audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)
-                        audio_mixe.export(nom_mp3, format="mp3")
                         
+                        # Sécurité : on exporte dans un fichier temporaire puis on renomme
+                        temp_name = "temp_mix.mp3"
+                        audio_mixe.export(temp_name, format="mp3")
+                        os.replace(temp_name, nom_mp3)
                     except Exception as e_mix:
-                        st.warning(f"Le mixage a échoué, voix seule conservée. Erreur : {e_mix}")
+                        st.warning(f"Le mixage a échoué (voix conservée). Erreur : {e_mix}")
 
-                # --- AJOUT DES MÉTADONNÉES GPS ---
-                try:  
+                # 4. AJOUT DES MÉTADONNÉES GPS (Version robuste)
+                try:
                     import eyed3
+                    # Petit délai pour laisser le fichier se stabiliser
                     audio_file = eyed3.load(nom_mp3)
                     if audio_file.tag is None:
                         audio_file.initTag()
-                        
-                    # On stocke les coordonnées (récupérées à l'étape 1)
-                    coords = st.session_state.get('coords_gps', '0, 0')
+                    
+                    # On s'assure que les coordonnées sont bien là
+                    coords = st.session_state.get('coords_gps', 'Non renseigné')
+                    
+                    # On écrit dans le titre ET dans le commentaire (pour Windows)
+                    audio_file.tag.title = f"{sujet} | {coords}"
                     audio_file.tag.comments.set(coords)
                     
-                    # On ajoute le titre
-                    audio_file.tag.title = f"Guide : {sujet}"
-                    audio_file.tag.save()
+                    # On ajoute le public dans le champ 'Album' pour le tri
+                    audio_file.tag.album = f"Public : {public}"
+                    audio_file.tag.save(encoding='utf-8')
+                    
                 except Exception as e_gps:
                     st.info(f"Note : Métadonnées GPS non inscrites ({e_gps})")
 
-            # On sort enfin du "with st.status" pour afficher le résultat
+            # Affichage final
             st.success("🎉 Ton audio-guide immersif est prêt !")
             st.audio(nom_mp3)
             
@@ -232,8 +245,8 @@ if st.session_state.script_final:
                 st.download_button("📥 Télécharger le MP3", data=file, file_name=nom_mp3)
 
         except Exception as e:
-            # C'est ici qu'on ferme le tout premier "try" du bouton
-            st.error(f"Erreur lors de la création de l'audio : {e}")
+            st.error(f"Erreur globale : {e}")
+            
 # --- HISTORIQUE AVANCÉ ---
 st.divider()
 st.subheader("📚 Bibliothèque de tes audio-guides")
@@ -272,4 +285,5 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
