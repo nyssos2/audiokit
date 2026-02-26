@@ -152,6 +152,10 @@ if st.button("✍️ Rédiger le script"):
                - Si la durée est LONGUE (20-30 min) : Sois exhaustif, raconte des anecdotes détaillées, décris précisément l'architecture et l'histoire.
             """
             response = model.generate_content(prompt)
+            # On demande discrètement les coordonnées GPS à Gemini à côté
+            gps_prompt = f"Donne moi uniquement les coordonnées GPS (latitude, longitude) de {sujet} sous le format 'lat, lon'. Rien d'autre."
+            gps_res = model.generate_content(gps_prompt)
+            st.session_state.coords_gps = gps_res.text.strip()
             # Nettoyage de sécurité pour enlever les éventuels résidus de Markdown
             st.session_state.script_final = response.text.replace("**", "").replace("#", "")
             st.success("Script rédigé !")
@@ -189,7 +193,7 @@ if st.session_state.script_final:
 
                 asyncio.run(generate_voice())
 
-               # 3. MIXAGE AVEC L'AMBIANCE
+                # 3. MIXAGE AVEC L'AMBIANCE
                 if musique_fond and st.session_state.get('chemin_son_complet'):
                     try:
                         son_voix = AudioSegment.from_file(nom_mp3)
@@ -199,11 +203,28 @@ if st.session_state.script_final:
                         son_ambiance_calme = son_ambiance - 25 
                         audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)
                         audio_mixe.export(nom_mp3, format="mp3")
+                        
                     except Exception as e_mix:
-                        # Si le mixage foire, on prévient mais on continue avec la voix seule
                         st.warning(f"Le mixage a échoué, voix seule conservée. Erreur : {e_mix}")
 
-            # On sort du "with st.status"
+                # --- AJOUT DES MÉTADONNÉES GPS ---
+                try:  
+                    import eyed3
+                    audio_file = eyed3.load(nom_mp3)
+                    if audio_file.tag is None:
+                        audio_file.initTag()
+                        
+                    # On stocke les coordonnées (récupérées à l'étape 1)
+                    coords = st.session_state.get('coords_gps', '0, 0')
+                    audio_file.tag.comments.set(coords)
+                    
+                    # On ajoute le titre
+                    audio_file.tag.title = f"Guide : {sujet}"
+                    audio_file.tag.save()
+                except Exception as e_gps:
+                    st.info(f"Note : Métadonnées GPS non inscrites ({e_gps})")
+
+            # On sort enfin du "with st.status" pour afficher le résultat
             st.success("🎉 Ton audio-guide immersif est prêt !")
             st.audio(nom_mp3)
             
@@ -213,7 +234,6 @@ if st.session_state.script_final:
         except Exception as e:
             # C'est ici qu'on ferme le tout premier "try" du bouton
             st.error(f"Erreur lors de la création de l'audio : {e}")
-
 # --- HISTORIQUE AVANCÉ ---
 st.divider()
 st.subheader("📚 Bibliothèque de tes audio-guides")
@@ -252,3 +272,4 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
