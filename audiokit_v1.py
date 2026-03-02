@@ -30,7 +30,7 @@ def check_password():
     """Retourne True si l'utilisateur a saisi le bon mot de passe."""
     def password_entered():
         # --- MODIFIE LE MOT DE PASSE ICI ---
-        if st.session_state["password"] == "antifa": 
+        if st.session_state["password"] == st.secrets["APP_PASSWORD"]: 
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # On ne garde pas le mot de passe en mémoire
         else:
@@ -56,7 +56,7 @@ if not check_password():
 
 # --- LA SUITE DE TON CODE (Configuration, Interface, etc.) ---
 # --- 2. CONFIGURATION API ---
-genai.configure(api_key="AIzaSyAQVkgZmL7VLJyaq9M8_G6SJ7e3RjgA1hA")
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 # On choisit le modèle le plus performant de ta liste
 # gemini-2.5-flash est parfait pour la rédaction rapide
@@ -318,3 +318,4 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
