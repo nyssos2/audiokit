@@ -18,38 +18,19 @@ URL_LOGO = "https://raw.githubusercontent.com/nyssos2/audiokit_secure/main/logo.
 
 st.markdown(
     f"""
-    <link rel="icon" type="image/png" sizes="192x192" href="{https://github.com/nyssos2/audiokit_secure/blob/main/logo.png}">
-    <link rel="apple-touch-icon" href="{https://github.com/nyssos2/audiokit_secure/blob/main/logo.png}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{URL_LOGO}">
+    <link rel="apple-touch-icon" href="{URL_LOGO}">
     <meta name="mobile-web-app-capable" content="yes">
     """,
     unsafe_allow_html=True
 )
-# --- CONFIGURATION DE L'ICÔNE MOBILE (Android/PWA) ---
-# Remplace cette URL par ton URL "Raw" GitHub de l'étape 2
-URL_MON_LOGO = "https://github.com/nyssos2/audiokit_secure/main/logo.png"
 
-# Injection de code HTML dans le <head> de la page
-st.markdown(
-    f"""
-    <style>
-    /* Ce bloc est juste pour cacher le markdown vide dans l'interface */
-    .stMarkdown {{
-        display: none;
-    }}
-    </style>
-    <link rel="icon" type="image/png" sizes="192x192" href="{https://github.com/nyssos2/audiokit_secure/blob/main/logo.png}">
-    <link rel="icon" type="image/png" sizes="512x512" href="{https://github.com/nyssos2/audiokit_secure/blob/main/logo.png}">
-    <link rel="apple-touch-icon" href="{https://github.com/nyssos2/audiokit_secure/blob/main/logo.png}">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#4B0082"> """,
-    unsafe_allow_html=True
-)
 # --- SÉCURITÉ : MOT DE PASSE ---
 def check_password():
     """Retourne True si l'utilisateur a saisi le bon mot de passe."""
     def password_entered():
         # --- MODIFIE LE MOT DE PASSE ICI ---
-        if st.session_state["password"] == st.secrets["APP_PASSWORD"]:
+        if st.session_state["password"] == "antifa": 
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # On ne garde pas le mot de passe en mémoire
         else:
@@ -75,7 +56,7 @@ if not check_password():
 
 # --- LA SUITE DE TON CODE (Configuration, Interface, etc.) ---
 # --- 2. CONFIGURATION API ---
-genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+genai.configure(api_key="AIzaSyAQVkgZmL7VLJyaq9M8_G6SJ7e3RjgA1hA")
 
 # On choisit le modèle le plus performant de ta liste
 # gemini-2.5-flash est parfait pour la rédaction rapide
@@ -187,11 +168,10 @@ if st.button("✍️ Rédiger le script"):
             8. Respecte STRICTEMENT la durée de {duree} minutes.
             9. Calcule ton volume de texte : environ 140 mots par minute de narration. 
                (Exemple : pour 5 min = 700 mots / pour 20 min = 2800 mots).
-
             """
             response = model.generate_content(prompt)
             # On demande discrètement les coordonnées GPS à Gemini à côté
-            gps_prompt = f"Donne moi uniquement les coordonnées GPS (latitude, longitude) de {sujet} sous le format 'lat, lon'. Rien d'autre."
+            gps_prompt = f"Donne moi uniquement les coordonnées GPS (latitude, longitude) de {sujet} sous le format 'lat, lon'. Rien d'autre, sans les inventer."
             gps_res = model.generate_content(gps_prompt)
             st.session_state.coords_gps = gps_res.text.strip()
             # Nettoyage de sécurité pour enlever les éventuels résidus de Markdown
@@ -299,7 +279,7 @@ if st.session_state.script_final:
 
         except Exception as e:
             st.error(f"Erreur globale : {e}")
-            
+
 # --- HISTORIQUE AVANCÉ ---
 st.divider()
 st.subheader("📚 Bibliothèque de tes audio-guides")
@@ -338,11 +318,3 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
-
-
-
-
-
-
-
-
