@@ -127,6 +127,29 @@ with st.sidebar:
 # On sort de la sidebar pour le champ principal
 sujet = st.text_input("Quel monument ou lieu voulez-vous visiter ?")
 
+# AJOUT : Interface pour le document source (facultatif)
+pdf_complement = st.file_uploader("Facultatif : ajouter un PDF (texte uniquement)", type=["pdf"])
+
+pdf_text = ""
+if pdf_complement is not None:
+    try:
+        import PyPDF2
+        reader = PyPDF2.PdfReader(pdf_complement)
+        # Extraction simple du texte de toutes les pages
+        for page in reader.pages:
+            text = page.extract_text()
+            if text:
+                pdf_text += text + "\n"
+        
+        if pdf_text:
+            st.success("✅ Document PDF analysé et prêt à enrichir le script !")
+        else:
+            st.warning("⚠️ Le PDF semble vide ou illisible (format image ?).")
+    except ImportError:
+        st.error("La bibliothèque PyPDF2 n'est pas installée. Veuillez l'ajouter à vos dépendances.")
+    except Exception as e:
+        st.error(f"Erreur lors de la lecture du PDF : {e}")
+
 # --- 4. GÉNÉRATION ---
 # On utilise le session_state pour se souvenir du script entre les clics
 if "script_final" not in st.session_state:
@@ -136,20 +159,35 @@ if "script_final" not in st.session_state:
 if st.button("✍️ Rédiger le script"):
     try:
         with st.status(f"Rédaction en mode {personnalite}..."):
-            # Prompt enrichi
+            # CALCUL DU VOLUME DE TEXTE
+            # 145 mots/min est une bonne moyenne pour une élocution posée
+            mots_attendus = duree * 145
+
+            # Préparation du bloc de contexte PDF (si présent)
+            contexte_pdf = ""
+            if pdf_text:
+                contexte_pdf = f"""
+                CONTEXTE SUPPLÉMENTAIRE (Issu du document PDF fourni par l'utilisateur) :
+                {pdf_text[:12000]} 
+                
+                CONSIGNE SPÉCIFIQUE : Utilise prioritairement les informations, les chiffres et les anecdotes présents dans ce document pour enrichir ton récit. Si le document contient des détails techniques ou historiques précis, intègre-les de manière fluide dans le style choisi.
+                """
+            
+            # Prompt enrichi avec contrainte explicite de longueur et contexte PDF
             prompt = f"""
             TU ES UN GUIDE TOURISTIQUE DONT LE STYLE EST : {personnalite}.
             Sujet : {sujet}. Public : {public}. 
             DURÉE CIBLE : {duree} minutes.
+            NOMBRE DE MOTS MINIMUM : {mots_attendus} mots.
             
             STRUCTURE DU SCRIPT (OBLIGATOIRE) :
             1. INTRODUCTION HISTORIQUE RICHE : Commence par recontextualiser le lieu. Explique ce qu'il s'y passait à l'époque de sa création (ex: 11e siècle pour Angkor) et fais un parallèle avec ce qu'il se passait ailleurs dans le monde à la même époque pour donner des points de repère (ex: "Pendant qu'ici on bâtissait ceci, en Europe on achevait les premières cathédrales...").
             2. VISITE SPATIALE : si possible et si tu trouves les informations fiables et vérifiées nécessaires, guide l'auditeur physiquement dans l'espace. Utilise des indications directionnelles ("Si vous regardez à votre droite", "En passant sous le portique", "Cherchez du regard tel détail sur le fronton").
             3. ANECDOTES ET DÉTAILS : Intègre des éléments sur l'architecture, la vie quotidienne ou les secrets du lieu. Ne propose que des informations qui ont été vérifiées.
             4. NOTICES BIOGRAPHIQUES : Si une ou plusieurs personnalités sont déterminantes dans l'histoire du lieu visité, intègre des éléments biographiques les concernant. Exemple : Claunde-Nicolas LEDOUX pour les salines royales d'Arc et Senans.
-            5. ADAPTE LA GRANULARITÉ :
-               - Si la durée demandée est COURTE (5-10 min) : Sois très synthétique, va à l'essentiel, donne les faits marquants.
-               - Si la durée est LONGUE (20-30 min) : Sois exhaustif, raconte des anecdotes détaillées, décris précisément l'architecture et l'histoire, augmente les détails.
+            5. ADAPTE LA GRANULARITÉ A LA LONGUEUR :
+               -Tu DOIS impérativement atteindre environ {mots_attendus} mots pour que la lecture dure {duree} minutes. 
+               -Si la durée est longue, n'hésite pas à décrire très précisément les décors, l'ambiance et à multiplier les anecdotes historiques.
             6. RESPECTE AU MAXIMUM LA DUREE DEMANDEE (duree).
                
             CONSIGNES DE STYLE :
@@ -319,5 +357,6 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
 
