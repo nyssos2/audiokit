@@ -257,8 +257,8 @@ if st.session_state.script_final:
                 async def generate_voice():
                     voice = "fr-FR-DeniseNeural" if genre_voix == "Féminine" else "fr-FR-HenriNeural"
                     # On ajoute un petit silence au début
-                    texte_complet = " . . . " + st.session_state.script_final
-                    communicate = edge_tts.Communicate(st.session_state.script_final, voice)
+                    texte_complet = " ... ..." + st.session_state.script_final
+                    communicate = edge_tts.Communicate(texte_complet, voice)
                     await communicate.save(temp_voix)
 
                 asyncio.run(generate_voice())
@@ -278,8 +278,16 @@ if st.session_state.script_final:
                         # Réglage du volume d'ambiance (-25dB)
                         son_ambiance_calme = son_ambiance - 25
 
-                        # Superposition (overlay) de la voix sur l'ambiance en boucle
-                        audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)                        
+                        # Adapter la durée de l'ambiance à celle de la voix
+                        if len(son_ambiance_calme) < len(son_voix):
+                            repetition = len(son_voix) // len(son_ambiance_calme) + 1
+                            son_ambiance_calme = son_ambiance_calme * repetition
+
+                        # Couper à la même durée que la voix
+                        son_ambiance_calme = son_ambiance_calme[:len(son_voix)]
+                        
+                        # Mixage
+                        audio_mixe = son_voix.overlay(son_ambiance_calme)                        
                         
                         # Exportation finale
                         audio_mixe.export(nom_mp3, format="mp3")
@@ -289,8 +297,7 @@ if st.session_state.script_final:
                             os.remove(temp_voix)
                         
                     except Exception as e_mix:
-                        st.error(f"Détail de l'erreur de mixage : {e_mix}") # Affiche l'erreur réelle sur l'interface
-                        st.warning(f"Le mixage a échoué (voix seule conservée).")
+                        st.error(f"Erreur mixage : {e_mix}")
                         # Si le mixage échoue, on renomme la voix temp en fichier final
                         if os.path.exists(temp_voix):
                             os.rename(temp_voix, nom_mp3)
@@ -370,4 +377,3 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
-
