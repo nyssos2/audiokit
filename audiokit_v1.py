@@ -6,6 +6,7 @@ import edge_tts
 # (suppression de 'from gtts import gTTS')
 import os
 import datetime
+import pypdf
 from pydub import AudioSegment
 st.set_page_config(
     page_title="AudioKit",
@@ -18,9 +19,14 @@ URL_LOGO = "https://raw.githubusercontent.com/nyssos2/audiokit_secure/main/logo.
 
 st.markdown(
     f"""
-    <link rel="icon" type="image/png" sizes="192x192" href="{URL_LOGO}">
-    <link rel="apple-touch-icon" href="{URL_LOGO}">
+    <link rel="icon" type="image/png" href="{URL_LOGO}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{URL_LOGO}">
+    <link rel="shortcut icon" type="image/png" href="{URL_LOGO}">
+    <meta name="apple-mobile-web-app-title" content="AudioKit">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#ffffff">
     """,
     unsafe_allow_html=True
 )
@@ -133,8 +139,7 @@ pdf_complement = st.file_uploader("Facultatif : ajouter un PDF (texte uniquement
 pdf_text = ""
 if pdf_complement is not None:
     try:
-        import PyPDF2
-        reader = PyPDF2.PdfReader(pdf_complement)
+        reader = pypdf.PdfReader(pdf_complement)
         # Extraction simple du texte de toutes les pages
         for page in reader.pages:
             text = page.extract_text()
@@ -146,7 +151,7 @@ if pdf_complement is not None:
         else:
             st.warning("⚠️ Le PDF semble vide ou illisible (format image ?).")
     except ImportError:
-        st.error("La bibliothèque PyPDF2 n'est pas installée. Veuillez l'ajouter à vos dépendances.")
+        st.error("La bibliothèque pypdf n'est pas installée. Veuillez l'ajouter à vos dépendances.")
     except Exception as e:
         st.error(f"Erreur lors de la lecture du PDF : {e}")
 
@@ -259,21 +264,24 @@ if st.session_state.script_final:
                 if musique_fond and st.session_state.get('chemin_son_complet'):
                     try:
                         import time
-                        time.sleep(0.5)  # Petit dodo pour laisser Windows libérer le fichier
+                        time.sleep(1.0)  # Petit dodo pour laisser Windows libérer le fichier
                         
                         # On charge les deux sources
-                        son_voix = AudioSegment.from_file(nom_mp3, format="mp3")
+                        son_voix = AudioSegment.from_file(temp_voix)
                         son_ambiance = AudioSegment.from_file(st.session_state.chemin_son_complet)
 
-                        # Réglage du volume (-25dB)
-                        son_ambiance_calme = son_ambiance - 25 
+                        # Réglage du volume d'ambiance (-25dB)
+                        son_ambiance_calme = son_ambiance - 25
+
+                        # Superposition (overlay) de la voix sur l'ambiance en boucle
+                        audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)                        
                         
-                        # Mixage
-                        audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)
-                        
-                        # On exporte d'abord vers un nom différent pour éviter les conflits
-                        temp_final = "final_output_temp.mp3"
-                        audio_mixe.export(temp_final, format="mp3")
+                        # Exportation finale
+                        audio_mixe.export(nom_mp3, format="mp3")
+                       
+                        # Nettoyage du fichier temporaire
+                        if os.path.exists(temp_voix):
+                            os.remove(temp_voix)
                         
                         # On remplace le fichier original par le mixé
                         # On ferme les accès avant (certains systèmes le demandent)
@@ -284,8 +292,14 @@ if st.session_state.script_final:
                         
                     except Exception as e_mix:
                         st.warning(f"Le mixage a échoué (voix seule conservée).")
-                        # C'est ici qu'on force l'affichage de l'erreur dans PowerShell :
+                        # Si le mixage échoue, on renomme la voix temp en fichier final
+                        if os.path.exists(temp_voix):
+                            os.rename(temp_voix, nom_mp3)
                         print(f"--- ERREUR MIXAGE : {e_mix}")
+                else:
+                    # Pas de musique de fond, on renomme simplement
+                    if os.path.exists(temp_voix):
+                        os.rename(temp_voix, nom_mp3)
 
                 # 4. AJOUT DES MÉTADONNÉES GPS (Version robuste)
                 try:
@@ -357,6 +371,7 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
 
 
