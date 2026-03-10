@@ -289,6 +289,7 @@ if st.session_state.script_final:
                             os.remove(temp_voix)
                         
                     except Exception as e_mix:
+                        st.error(f"Détail de l'erreur de mixage : {e_mix}") # Affiche l'erreur réelle sur l'interface
                         st.warning(f"Le mixage a échoué (voix seule conservée).")
                         # Si le mixage échoue, on renomme la voix temp en fichier final
                         if os.path.exists(temp_voix):
@@ -369,3 +370,4 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
