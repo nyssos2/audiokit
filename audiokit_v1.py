@@ -264,6 +264,7 @@ if st.session_state.script_final:
                 asyncio.run(generate_voice())
 
                 # 3. MIXAGE AVEC L'AMBIANCE
+                st.write(f"DEBUG — musique_fond={musique_fond} | chemin={st.session_state.get('chemin_son_complet')}") # Ligne temporaire de débogage
                 if musique_fond and st.session_state.get('chemin_son_complet'):
                     try:
                         import time
@@ -380,3 +381,4 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
