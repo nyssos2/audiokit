@@ -138,7 +138,7 @@ with st.sidebar:
 sujet = st.text_input("Quel monument ou lieu voulez-vous visiter ?")
 
 # AJOUT : Interface pour le document source (facultatif)
-pdf_complement = st.file_uploader("Ajouter un document source (facultatif)", type=["pdf"])
+pdf_complement = st.file_uploader("Facultatif : ajouter un document source en PDF texte (pas scanné)", type=["pdf"])
 
 pdf_text = ""
 if pdf_complement is not None:
@@ -349,3 +349,4 @@ if st.session_state.script_final:
 
         except Exception as e:
             st.error(f"Erreur globale : {e}")
+
