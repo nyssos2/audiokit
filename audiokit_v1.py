@@ -163,9 +163,6 @@ if pdf_complement is not None:
 # On utilise le session_state pour se souvenir du script entre les clics
 if "script_final" not in st.session_state:
     st.session_state.script_final = ""
-if st.button("🗑️ Effacer et recommencer"):
-    st.session_state.script_final = ""
-    st.rerun()
 
 # ÉTAPE 1 : RÉDACTION
 if st.button("✍️ Etape 1/3 : Rédiger le script"):
@@ -232,7 +229,10 @@ if st.button("✍️ Etape 1/3 : Rédiger le script"):
             progress.progress(100, text="✅ Script prêt !")
             st.success("Script rédigé !")
     except Exception as e:
-        st.error(f"Erreur rédaction : {e}")
+        if "quota" in str(e).lower() or "429" in str(e) or "resource exhausted" in str(e).lower():
+            st.warning("⏳ Vous avez atteint votre limite quotidienne de scripts gratuits. Veuillez réessayer ultérieurement.")
+        else:
+            st.error(f"Erreur rédaction : {e}")
 
 # ÉTAPE 2 : ÉDITION (La boîte de dialogue toujours visible si un script existe)
 if st.session_state.script_final:
@@ -346,7 +346,10 @@ if st.session_state.script_final:
             
             with open(nom_mp3, "rb") as file:
                 st.download_button("📥 Télécharger le MP3", data=file, file_name=nom_mp3)
-
+                
         except Exception as e:
-            st.error(f"Erreur globale : {e}")
-
+            st.error(f"Erreur globale : {e}")   
+            
+if st.button("🗑️ Effacer et recommencer"):
+    st.session_state.script_final = ""
+    st.rerun()
