@@ -24,22 +24,22 @@ AudioKit est une application web qui génère des audio-guides touristiques imme
 
 🛠️ Stack technique
 
-Streamlit — Interface web
+- Streamlit — Interface web
 
-Google Gemini 2.5 Flash — Génération du script
+- Google Gemini 2.5 Flash — Génération du script
 
-Edge TTS — Synthèse vocale
+- Edge TTS — Synthèse vocale
 
-pydub + FFmpeg — Mixage audio
+- pydub + FFmpeg — Mixage audio
 
 
 🚀 Utilisation
 
-Connectez-vous avec le mot de passe
+- Connectez-vous avec le mot de passe
 
-Configurez vos paramètres dans la sidebar
+- Configurez vos paramètres dans la sidebar
 
-Saisissez le nom du monument ou du lieu
+- Saisissez le nom du monument ou du lieu
 
 ✍️ Rédigez le script
 
