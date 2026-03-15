@@ -463,7 +463,6 @@ if st.session_state.script_final:
             st.error(f"Erreur globale : {e}")   
     # ── AFFICHAGE PERSISTANT DU RÉSULTAT ──
     if st.session_state.mp3_bytes is not None:
-        # st.write(f"DEBUG — mp3_bytes présent : {bool(st.session_state.get('mp3_bytes'))} | nom_mp3 : {st.session_state.get('nom_mp3', 'vide')}")
         st.audio(st.session_state.mp3_bytes, format="audio/mp3")
         st.download_button("📥 Télécharger le MP3", data=st.session_state.mp3_bytes, file_name=st.session_state.nom_mp3)
 
