@@ -52,7 +52,7 @@ def coords_to_country_slug(coords_str):
     except:
         return "inconnu", "Inconnu"
 
-def push_to_audiomap(nom_mp3, slug, nom_affiche, script, coords_str, sujet):
+def push_to_audiomap(nom_mp3, slug, nom_affiche, script, coords_str, sujet, duree, public, personnalite):
     """Envoie le MP3 et le JSON vers le repo GitHub AudioMap"""
     token = st.secrets["GITHUB_TOKEN"]
     repo  = "nyssos2/AudioMap"
@@ -63,9 +63,11 @@ def push_to_audiomap(nom_mp3, slug, nom_affiche, script, coords_str, sujet):
     base_url = f"https://api.github.com/repos/{repo}/contents/audioguides/{slug}"
 
     # Nom de base du fichier (sans espaces ni accents)
-    nom_base = re.sub(r'[^a-z0-9]+', '-', 
-                unicodedata.normalize('NFD', sujet)
-                .encode('ascii','ignore').decode().lower()).strip('-')
+    def slugify(s):
+        s = unicodedata.normalize('NFD', str(s)).encode('ascii','ignore').decode().lower()
+        return re.sub(r'[^a-z0-9]+', '-', s).strip('-')
+    
+    nom_base = f"{slugify(sujet)}_{duree}min_{slugify(public)}_{slugify(personnalite)}"
 
     # ── 1. Envoyer le MP3 ──
     with open(nom_mp3, "rb") as f:
@@ -461,7 +463,7 @@ if st.session_state.script_final:
             st.error(f"Erreur globale : {e}")   
     # ── AFFICHAGE PERSISTANT DU RÉSULTAT ──
     if st.session_state.mp3_bytes is not None:
-        st.write(f"DEBUG — mp3_bytes présent : {bool(st.session_state.get('mp3_bytes'))} | nom_mp3 : {st.session_state.get('nom_mp3', 'vide')}")
+        # st.write(f"DEBUG — mp3_bytes présent : {bool(st.session_state.get('mp3_bytes'))} | nom_mp3 : {st.session_state.get('nom_mp3', 'vide')}")
         st.audio(st.session_state.mp3_bytes, format="audio/mp3")
         st.download_button("📥 Télécharger le MP3", data=st.session_state.mp3_bytes, file_name=st.session_state.nom_mp3)
 
@@ -483,12 +485,15 @@ if st.session_state.script_final:
                 with st.spinner("Envoi en cours…"):
                     try:
                         push_to_audiomap(
-                            nom_mp3     = st.session_state.nom_mp3,
-                            slug        = slug_edite,
-                            nom_affiche = country,
-                            script      = st.session_state.script_final,
-                            coords_str  = coords,
-                            sujet       = sujet
+                            nom_mp3      = st.session_state.nom_mp3,
+                            slug         = slug_edite,
+                            nom_affiche  = country,
+                            script       = st.session_state.script_final,
+                            coords_str   = coords,
+                            sujet        = sujet,
+                            duree        = duree,
+                            public       = public,
+                            personnalite = personnalite
                         )
                         st.success(f"✅ Audio-guide envoyé dans `audioguides/{slug_edite}/` !")
                         st.markdown("[🗺️ Voir sur AudioMap](https://nyssos2.github.io/AudioMap)")
