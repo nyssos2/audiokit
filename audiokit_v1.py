@@ -6,6 +6,10 @@ import edge_tts
 # (suppression de 'from gtts import gTTS')
 import os
 import pypdf
+import requests
+import unicodedata
+import re
+import json
 
 from pydub import AudioSegment
 AudioSegment.converter = "ffmpeg"
@@ -33,7 +37,110 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+def coords_to_country_slug(coords_str):
+    """Convertit 'lat, lon' en slug de pays ex: 'japon', 'france'"""
+    try:
+        lat, lon = [x.strip() for x in coords_str.split(',')]
+        url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&accept-language=fr"
+        r = requests.get(url, headers={"User-Agent": "AudioKit/1.0"}, timeout=5)
+        country = r.json().get("address", {}).get("country", "inconnu")
+        # Convertir en slug : "Japon" → "japon", "Côte d'Ivoire" → "cote-d-ivoire"
+        slug = unicodedata.normalize('NFD', country)
+        slug = slug.encode('ascii', 'ignore').decode('utf-8')
+        slug = re.sub(r'[^a-z0-9]+', '-', slug.lower()).strip('-')
+        return slug, country
+    except:
+        return "inconnu", "Inconnu"
 
+def push_to_audiomap(nom_mp3, slug, nom_affiche, script, coords_str, sujet):
+    """Envoie le MP3 et le JSON vers le repo GitHub AudioMap"""
+    token = st.secrets["GITHUB_TOKEN"]
+    repo  = "nyssos2/AudioMap"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github+json"
+    }
+    base_url = f"https://api.github.com/repos/{repo}/contents/audioguides/{slug}"
+
+    # Nom de base du fichier (sans espaces ni accents)
+    nom_base = re.sub(r'[^a-z0-9]+', '-', 
+                unicodedata.normalize('NFD', sujet)
+                .encode('ascii','ignore').decode().lower()).strip('-')
+
+    # ── 1. Envoyer le MP3 ──
+    with open(nom_mp3, "rb") as f:
+        mp3_b64 = __import__('base64').b64encode(f.read()).decode()
+
+    mp3_path = f"{base_url}/{nom_base}.mp3"
+    mp3_check = requests.get(mp3_path, headers=headers)
+    mp3_payload = {
+        "message": f"AudioKit : ajout {sujet}",
+        "content": mp3_b64,
+    }
+    if mp3_check.status_code == 200:
+        mp3_payload["sha"] = mp3_check.json()["sha"]
+    requests.put(mp3_path, headers=headers, json=mp3_payload)
+
+    # ── 2. Envoyer le JSON ──
+    lat, lon = [x.strip() for x in coords_str.split(',')]
+    data_json = {
+        "nom": sujet,
+        "sous_titre": nom_affiche,
+        "lat": float(lat),
+        "lng": float(lon),
+        "fichier": f"{nom_base}.mp3",
+        "duree": "?:??",
+        "transcription": script
+    }
+    json_b64 = __import__('base64').b64encode(
+        json.dumps(data_json, ensure_ascii=False, indent=2).encode('utf-8')
+    ).decode()
+
+    json_path = f"{base_url}/{nom_base}.json"
+    json_check = requests.get(json_path, headers=headers)
+    json_payload = {
+        "message": f"AudioKit : JSON {sujet}",
+        "content": json_b64,
+    }
+    if json_check.status_code == 200:
+        json_payload["sha"] = json_check.json()["sha"]
+    requests.put(json_path, headers=headers, json=json_payload)
+
+    # ── 3. Mettre à jour index.json ──
+    index_url = f"https://api.github.com/repos/{repo}/contents/audioguides/index.json"
+    index_res = requests.get(index_url, headers=headers)
+    index_data = json.loads(__import__('base64').b64decode(
+        index_res.json()["content"]).decode('utf-8'))
+    index_sha  = index_res.json()["sha"]
+
+    # Trouver ou créer la destination
+    dest = next((d for d in index_data["destinations"] if d["key"] == slug), None)
+    if not dest:
+        dest = {"key": slug, "nom": nom_affiche, "sites": []}
+        index_data["destinations"].append(dest)
+
+    # Ajouter ou mettre à jour le site
+    existing = next((s for s in dest["sites"] if s["fichier"] == f"{nom_base}.mp3"), None)
+    if existing:
+        existing.update({"nom": sujet, "sous_titre": nom_affiche,
+                         "lat": float(lat), "lng": float(lon),
+                         "transcription": script})
+    else:
+        dest["sites"].append({
+            "nom": sujet, "sous_titre": nom_affiche,
+            "lat": float(lat), "lng": float(lon),
+            "fichier": f"{nom_base}.mp3", "duree": "?:??",
+            "transcription": script
+        })
+
+    new_index_b64 = __import__('base64').b64encode(
+        json.dumps(index_data, ensure_ascii=False, indent=2).encode('utf-8')
+    ).decode()
+    requests.put(index_url, headers=headers, json={
+        "message": f"AudioKit : index mis à jour ({sujet})",
+        "content": new_index_b64,
+        "sha": index_sha
+    })
 # --- SÉCURITÉ : MOT DE PASSE ---
 def check_password():
     """Retourne True si l'utilisateur a saisi le bon mot de passe."""
@@ -346,6 +453,41 @@ if st.session_state.script_final:
             
             with open(nom_mp3, "rb") as file:
                 st.download_button("📥 Télécharger le MP3", data=file, file_name=nom_mp3)
+            # ── ENVOI VERS AUDIOMAP ──────────────────────────────
+            st.markdown("---")
+            envoyer = st.checkbox("🗺️ Envoyer cet audio-guide vers AudioMap")
+
+            if envoyer:
+                coords = st.session_state.get('coords_gps', '')
+                if coords and coords != 'Non renseigné':
+                    slug, country = coords_to_country_slug(coords)
+                else:
+                    slug, country = 'inconnu', 'Inconnu'
+
+                st.info(f"📍 Destination détectée : **{country}** → dossier `{slug}`")
+                slug_edite = st.text_input(
+                    "Modifier le nom du dossier si besoin (minuscules, sans accents) :",
+                    value=slug
+                )
+
+                st.warning("⚠️ Ce fichier sera publié sur le repo GitHub AudioMap. Cette action est irréversible.")
+
+                if st.button("🚀 Confirmer l'envoi vers AudioMap"):
+                    with st.spinner("Envoi en cours…"):
+                        try:
+                            push_to_audiomap(
+                                nom_mp3   = nom_mp3,
+                                slug      = slug_edite,
+                                nom_affiche = country,
+                                script    = st.session_state.script_final,
+                                coords_str = coords,
+                                sujet     = sujet
+                            )
+                            st.success(f"✅ Audio-guide envoyé avec succès dans `audioguides/{slug_edite}/` !")
+                            st.markdown("[🗺️ Voir sur AudioMap](https://nyssos2.github.io/AudioMap)", unsafe_allow_html=False)
+                        except Exception as e:
+                            st.error(f"❌ Erreur lors de l'envoi : {e}")
+# ─────────────────────────────────────────────────────
                 
         except Exception as e:
             st.error(f"Erreur globale : {e}")   
