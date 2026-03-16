@@ -83,31 +83,6 @@ def push_to_audiomap(nom_mp3, slug, nom_affiche, script, coords_str, sujet, dure
         mp3_payload["sha"] = mp3_check.json()["sha"]
     requests.put(mp3_path, headers=headers, json=mp3_payload)
 
-    # ── 2. Envoyer le JSON ──
-    lat, lon = [x.strip() for x in coords_str.split(',')]
-    data_json = {
-        "nom": sujet,
-        "sous_titre": nom_affiche,
-        "lat": float(lat),
-        "lng": float(lon),
-        "fichier": f"{nom_base}.mp3",
-        "duree": "?:??",
-        "transcription": script
-    }
-    json_b64 = __import__('base64').b64encode(
-        json.dumps(data_json, ensure_ascii=False, indent=2).encode('utf-8')
-    ).decode()
-
-    json_path = f"{base_url}/{nom_base}.json"
-    json_check = requests.get(json_path, headers=headers)
-    json_payload = {
-        "message": f"AudioKit : JSON {sujet}",
-        "content": json_b64,
-    }
-    if json_check.status_code == 200:
-        json_payload["sha"] = json_check.json()["sha"]
-    requests.put(json_path, headers=headers, json=json_payload)
-
     # ── 3. Mettre à jour index.json ──
     index_url = f"https://api.github.com/repos/{repo}/contents/audioguides/index.json"
     index_res = requests.get(index_url, headers=headers)
