@@ -22,7 +22,7 @@ st.set_page_config(
 )
 # --- CONFIGURATION DE L'ICÔNE MOBILE ---
 # Note : J'ai ajouté 'raw.githubusercontent.com' pour que l'image soit lisible par le navigateur
-URL_LOGO = "https://raw.githubusercontent.com/nyssos2/audiokit_secure/main/logo.png"
+URL_LOGO = "https://raw.githubusercontent.com/nyssos2/AudioKit/main/logo.png"
 
 st.markdown(
     f"""
@@ -375,7 +375,7 @@ if st.session_state.script_final:
                 asyncio.run(generate_voice())
 
                 # 3. MIXAGE AVEC L'AMBIANCE
-                st.write(f"DEBUG — musique_fond={musique_fond} | chemin={st.session_state.get('chemin_son_complet')}") # Ligne temporaire de débogage
+                #st.write(f"DEBUG — musique_fond={musique_fond} | chemin={st.session_state.get('chemin_son_complet')}") # Ligne temporaire de débogage
                 if st.session_state.get('musique_fond') and st.session_state.get('chemin_son_complet'):
                     try:
                         import time
