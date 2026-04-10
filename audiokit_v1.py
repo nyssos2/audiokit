@@ -241,6 +241,29 @@ with st.sidebar:
     else:
         st.session_state.chemin_son_complet = None
 
+with st.expander("❓ Comment utiliser AudioKit ?"):
+    st.markdown("""
+**⚙️ Avant de commencer — Paramètres (colonne de gauche)**  
+Choisis ton public cible, la durée souhaitée, le style du guide et le type de voix. Tu peux aussi activer une ambiance sonore de fond.
+
+**Étape 1 — Rédiger le script**  
+Saisis le nom d'un lieu ou monument. Tu peux enrichir le script en uploadant un PDF. Clique sur *Étape 1/3 : Rédiger le script* : Gemini rédige un script narratif adapté à tes paramètres.
+
+**Étape 2 — Réviser**  
+Le script apparaît dans une zone éditable. Corrige ce que tu veux avant de continuer.
+
+**Étape 3 — Créer l'audio**  
+La voix est synthétisée et mixée avec l'ambiance sonore. Tu peux écouter et/ou télécharger le MP3.
+
+**🗺️ Publier vers AudioMap (optionnel)**  
+Envoie l'audio directement sur ta carte via la case à cocher en bas de page. Le lieu est détecté automatiquement par GPS.
+
+**💡 Conseils**  
+- 20 min de durée ≈ 2800 mots générés  
+- PDF texte uniquement (pas les scans)  
+- Télécharge ton MP3 avant de fermer l'appli, il ne sera pas conservé !
+""")
+
 # On sort de la sidebar pour le champ principal
 sujet = st.text_input("Quel monument ou lieu voulez-vous visiter ?")
 
