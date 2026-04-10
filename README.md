@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="logo.png" alt="AudioKit Logo" width="100" />
+<img src="https://raw.githubusercontent.com/nyssos2/AudioKit/main/logo.png" alt="AudioKit Logo" width="120" />
 
 # 🎙️ AudioKit `v5.9+`
 
@@ -25,7 +25,7 @@ AudioKit est une application intelligente conçue pour **transformer n'importe q
 Le pipeline est entièrement automatisé :
 
 ```
-Sujet / PDF  →  Script IA  →  Synthèse vocale  →  Mixage audio  →  Publication AudioMap
+Sujet (+ PDF)  →  Script IA  →  Synthèse vocale  →  Mixage audio  →  Publication AudioMap
 ```
 
 ---
@@ -34,9 +34,9 @@ Sujet / PDF  →  Script IA  →  Synthèse vocale  →  Mixage audio  →  Publ
 
 | Fonctionnalité | Détail |
 |---|---|
-| 🧠 **Intelligence Artificielle** | Rédaction de scripts personnalisés via **Google Gemini 1.5 Flash/Pro** |
+| 🧠 **Intelligence Artificielle** | Rédaction de scripts personnalisés via **Google Gemini 2.5 Flash** |
 | 🗣️ **Synthèse Vocale Premium** | Voix naturelles (Henri, Denise…) propulsées par **Edge-TTS** |
-| 🎵 **Mixage Automatique** | Superposition intelligente voix + ambiance sonore (Nature, Piano, Urbain) avec **Pydub** |
+| 🎵 **Mixage Automatique** | Superposition intelligente voix + ambiance sonore (Nature, Intérieur, Urbain) avec **Pydub** |
 | 📄 **Analyse de Documents** | Import de fichiers **PDF** pour enrichir le script généré |
 | 🌍 **Géolocalisation** | Extraction automatique des coordonnées GPS pour les métadonnées |
 | 🗺️ **Intégration AudioMap** | Publication directe vers le repo GitHub d'**AudioMap** |
