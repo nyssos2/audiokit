@@ -367,8 +367,6 @@ if st.button("✍️ Etape 1/3 : Rédiger le script"):
             st.warning(f"⏳ Vous avez atteint votre limite quotidienne de scripts gratuits. Détail : {e}")
         else:
             st.error(f"Erreur rédaction : {e}")
-        else:
-            st.error(f"Erreur rédaction : {e}")
 
 # ÉTAPE 2 : ÉDITION (La boîte de dialogue toujours visible si un script existe)
 if st.session_state.script_final:
