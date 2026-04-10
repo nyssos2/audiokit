@@ -364,7 +364,9 @@ if st.button("✍️ Etape 1/3 : Rédiger le script"):
             st.success("Script rédigé !")
     except Exception as e:
         if "quota" in str(e).lower() or "429" in str(e) or "resource exhausted" in str(e).lower():
-            st.warning("⏳ Vous avez atteint votre limite quotidienne de scripts gratuits. Veuillez réessayer ultérieurement.")
+            st.warning(f"⏳ Vous avez atteint votre limite quotidienne de scripts gratuits. Détail : {e}")
+        else:
+            st.error(f"Erreur rédaction : {e}")
         else:
             st.error(f"Erreur rédaction : {e}")
 
