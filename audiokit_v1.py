@@ -168,10 +168,19 @@ ID_MODEL = "models/gemini-2.5-flash"
 model = GenerativeModel(model_name=ID_MODEL)
 
 # --- TITRE ET SOUS-TITRE ---
-st.title("🎙️ Ma fabrique à audio-guides perso")
-st.markdown("##### Crée tes audio-guides immersifs et captivants !")
+st.markdown(
+    f"""
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:0px;">
+        <img src="{URL_LOGO}" style="height:64px; width:64px; object-fit:contain; border-radius:12px;">
+        <span style="font-size:2em; font-weight:800; line-height:1;">AudioKit</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+st.markdown("### Ma fabrique à audioguides perso")
+st.markdown("##### Crée tes audioguides immersifs et captivants quel que soit le lieu à visiter !")
 # On utilise du HTML simple dans le markdown pour réduire la taille et griser le texte
-st.markdown(f"<p style='font-size: 0.8em; color: gray;'>Modèle propulsé par Gemini 2.5 Flash</p>", unsafe_allow_html=True)
+st.markdown(f"<p style='font-size: 0.8em; color: gray;'>Propulsé par Gemini 2.5 Flash</p>", unsafe_allow_html=True)
 
 # --- INTERFACE ---
 with st.sidebar:
@@ -375,7 +384,7 @@ if st.session_state.script_final:
                 asyncio.run(generate_voice())
 
                 # 3. MIXAGE AVEC L'AMBIANCE
-                #st.write(f"DEBUG — musique_fond={musique_fond} | chemin={st.session_state.get('chemin_son_complet')}") # Ligne temporaire de débogage
+                # st.write(f"DEBUG — musique_fond={musique_fond} | chemin={st.session_state.get('chemin_son_complet')}") # Ligne temporaire de débogage
                 if st.session_state.get('musique_fond') and st.session_state.get('chemin_son_complet'):
                     try:
                         import time
