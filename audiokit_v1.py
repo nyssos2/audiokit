@@ -10,7 +10,6 @@ import requests
 import unicodedata
 import re
 import json
-st.write(f"Encodage système : {__import__('sys').getdefaultencoding()}")
 
 from pydub import AudioSegment
 AudioSegment.converter = "ffmpeg"
